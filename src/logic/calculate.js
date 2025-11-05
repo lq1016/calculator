@@ -11,13 +11,27 @@ import isNumber from "./isNumber";
  *   total:String      the running total
  *   next:String       the next number to be operated on with the total
  *   operation:String  +, -, etc.
+ *   error:String      error message if any
  */
 export default function calculate(obj, buttonName) {
+  // Clear error when user starts a new input
+  if (obj.error && (isNumber(buttonName) || buttonName === "AC")) {
+    return {
+      ...obj,
+      error: null
+    };
+  }
+
+  // If there's an error, don't process further operations
+  if (obj.error) {
+    return obj;
+  }
   if (buttonName === "AC") {
     return {
       total: null,
       next: null,
       operation: null,
+      error: null,
     };
   }
 
@@ -91,7 +105,7 @@ export default function calculate(obj, buttonName) {
     }
   }
 
-  if (buttonName === "+/-") {
+  if (buttonName === "+/-" ) {
     if (obj.next) {
       return { next: (-1 * parseFloat(obj.next)).toString() };
     }
@@ -101,21 +115,149 @@ export default function calculate(obj, buttonName) {
     return {};
   }
 
+  // Scientific functions
+  if (buttonName === "sin") {
+    if (obj.next) {
+      return { next: Math.sin(parseFloat(obj.next) * Math.PI / 180).toString() };
+    }
+    if (obj.total) {
+      return { total: Math.sin(parseFloat(obj.total) * Math.PI / 180).toString() };
+    }
+    return {};
+  }
+
+  if (buttonName === "cos") {
+    if (obj.next) {
+      return { next: Math.cos(parseFloat(obj.next) * Math.PI / 180).toString() };
+    }
+    if (obj.total) {
+      return { total: Math.cos(parseFloat(obj.total) * Math.PI / 180).toString() };
+    }
+    return {};
+  }
+
+  if (buttonName === "tan") {
+    if (obj.next) {
+      return { next: Math.tan(parseFloat(obj.next) * Math.PI / 180).toString() };
+    }
+    if (obj.total) {
+      return { total: Math.tan(parseFloat(obj.total) * Math.PI / 180).toString() };
+    }
+    return {};
+  }
+
+  if (buttonName === "log") {
+    if (obj.next) {
+      return { next: Math.log10(parseFloat(obj.next)).toString() };
+    }
+    if (obj.total) {
+      return { total: Math.log10(parseFloat(obj.total)).toString() };
+    }
+    return {};
+  }
+
+  if (buttonName === "√") {
+    if (obj.next) {
+      return { next: Math.sqrt(parseFloat(obj.next)).toString() };
+    }
+    if (obj.total) {
+      return { total: Math.sqrt(parseFloat(obj.total)).toString() };
+    }
+    return {};
+  }
+
+  // Parentheses handling
+  if (buttonName === "(") {
+    return {
+      ...obj,
+      next: obj.next ? obj.next + "(" : "(",
+      parenthesisCount: (obj.parenthesisCount || 0) + 1
+    };
+  }
+
+  if (buttonName === ")") {
+    const openParentheses = obj.parenthesisCount || 0;
+    if (openParentheses <= 0) {
+      return {
+        ...obj,
+        error: "Mismatched parentheses"
+      };
+    }
+    return {
+      ...obj,
+      next: obj.next ? obj.next + ")" : ")",
+      parenthesisCount: openParentheses - 1
+    };
+  }
+
+  // Exponentiation
+  if (buttonName === "^") {
+    if (obj.next) {
+      return {
+        ...obj,
+        total: obj.next,
+        next: null,
+        operation: "^"
+      };
+    }
+    return obj;
+  }
+
+  // Pi constant
+  if (buttonName === "π") {
+    return {
+      ...obj,
+      next: Math.PI.toString()
+    };
+  }
+
+  // Euler's number
+  if (buttonName === "e") {
+    return {
+      ...obj,
+      next: Math.E.toString()
+    };
+  }
+
   // Button must be an operation
 
-  // When the user presses an operation button without having entered
-  // a number first, do nothing.
-  // if (!obj.next && !obj.total) {
-  //   return {};
-  // }
+  // Handle consecutive operators - ignore if no number to operate on
+  if (!obj.next && !obj.total) {
+    return obj;
+  }
 
   // User pressed an operation button and there is an existing operation
   if (obj.operation) {
-    return {
-      total: operate(obj.total, obj.next, obj.operation),
-      next: null,
-      operation: buttonName,
-    };
+    // If there's no next number, just update the operation
+    if (!obj.next) {
+      return {
+        ...obj,
+        operation: buttonName
+      };
+    }
+    
+    try {
+      let result;
+      if (obj.operation === "^") {
+        // Handle exponentiation separately since it's not in operate.js
+        const base = parseFloat(obj.total);
+        const exponent = parseFloat(obj.next);
+        result = Math.pow(base, exponent).toString();
+      } else {
+        result = operate(obj.total, obj.next, obj.operation);
+      }
+      
+      return {
+        total: result,
+        next: null,
+        operation: buttonName,
+      };
+    } catch (error) {
+      return {
+        ...obj,
+        error: error.message || "Invalid operation"
+      };
+    }
   }
 
   // no operation yet, but the user typed one

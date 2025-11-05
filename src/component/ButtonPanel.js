@@ -16,6 +16,34 @@ export default class ButtonPanel extends React.Component {
   render() {
     return (
       <div className="component-button-panel">
+        {/* Mode toggle button */}
+        <div>
+          <Button name={this.props.isScientificMode ? "Basic" : "Sci"} clickHandler={this.props.toggleMode} orange />
+        </div>
+        
+        {/* Scientific functions row - only visible in scientific mode */}
+        {this.props.isScientificMode && (
+          <div>
+            <Button name="sin" clickHandler={this.handleClick} scientific />
+            <Button name="cos" clickHandler={this.handleClick} scientific />
+            <Button name="tan" clickHandler={this.handleClick} scientific />
+            <Button name="log" clickHandler={this.handleClick} scientific />
+            <Button name="√" clickHandler={this.handleClick} scientific />
+          </div>
+        )}
+        
+        {/* Parentheses row - only visible in scientific mode */}
+        {this.props.isScientificMode && (
+          <div>
+            <Button name="(" clickHandler={this.handleClick} />
+            <Button name=")" clickHandler={this.handleClick} />
+            <Button name="^" clickHandler={this.handleClick} />
+            <Button name="π" clickHandler={this.handleClick} />
+            <Button name="e" clickHandler={this.handleClick} />
+          </div>
+        )}
+        
+        {/* Basic calculator buttons */}
         <div>
           <Button name="AC" clickHandler={this.handleClick} />
           <Button name="+/-" clickHandler={this.handleClick} />
